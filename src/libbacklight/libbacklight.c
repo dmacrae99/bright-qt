@@ -1,9 +1,33 @@
-#include "libbrightness.h"
+/* libbacklight.c: Set of functions to access and control a backlight device
+ *
+ * Copyright (C) 2017  Damien MacRae
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses.
+ *
+ * Damien MacRae <dmacrae99@gmail.com>
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <libudev.h>
 #include <string.h>
+#include <errno.h>
+
+#include "libbacklight.h"
+
+const char backlightsyspath = "/sys/class/backlight/"
 
 struct backlight *init_backlight() {
 	struct backlight *backlight = malloc(sizeof(struct backlight));
@@ -25,26 +49,15 @@ const char *get_backlightname() {
 	
 	udev = udev_new();
 	if (!udev)
-		fprintf(stderr, "ERROR: Failed to Create Udev Device\n");
+		fprintf(stderr, "Failed to create udev device: %s", strerror(r));
 	else {
 		enumerate = udev_enumerate_new(udev);
-		if(!enumerate)
-			fprintf(stderr, "ERROR: Failed to create enumerate system\n");
-		else {
-			udev_enumerate_add_match_subsystem(enumerate, "backlight");
-			udev_enumerate_scan_devices(enumerate);
-
-			dev_list_entrys = udev_enumerate_get_list_entry(enumerate);
-
-			if(!dev_list_entrys)
-				fprintf(stderr, "ERROR: No udev Devices were found\n");
-			else {
-				path = udev_list_entry_get_name(dev_list_entrys);
-				dev = udev_device_new_from_syspath(udev, path);
-
-				sysname = udev_device_get_sysname(dev);
-			}
-		}
+		udev_enumerate_add_match_subsystem(enumerate, "backlight");
+		udev_enumerate_scan_devices(enumerate);
+		dev_list_entrys = udev_enumerate_get_list_entry(enumerate);
+		path = udev_list_entry_get_name(dev_list_entrys);
+		dev = udev_device_new_from_syspath(udev, path);
+		sysname = udev_device_get_sysname(dev);
 	}
 	free(udev);
 	free(enumerate);
@@ -57,7 +70,7 @@ const char *get_backlightname() {
 char *get_folderpath(struct backlight *backlight) {
 	char *folderpath;
 	folderpath = malloc(500*sizeof(char));
-	strcpy(folderpath, "/sys/class/backlight/");
+	strcpy(folderpath, backlightsyspath);
 	strcat(folderpath, backlight->devname);
 	strcat(folderpath, "/");
 	return folderpath;
@@ -95,15 +108,11 @@ int get_brightness(char *file) {
 	return brightness;	
 }
 
-void set_brightness(struct backlight *backlight, const char *amountc) {
+void set_brightness(struct backlight *backlight, int amount) {
 	char *file = get_filename(backlight->foldername,"brightness");
 	char *writebuffer = malloc(sizeof(char)*10);
 	FILE *brightnessf;
-	int amount;
 
-	amount = atoi(amountc);
-
-	printf("Opening file %s for writing...\n", file);
 	brightnessf = fopen(file, "w");
 
 	if(!brightnessf)
@@ -112,7 +121,8 @@ void set_brightness(struct backlight *backlight, const char *amountc) {
 		sprintf(writebuffer, "%d", amount);
 		fputs(writebuffer, brightnessf);
 	}
-
+	
+	free(file);
 	free(writebuffer);
 	fclose(brightnessf);
 }
