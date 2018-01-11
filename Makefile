@@ -1,15 +1,13 @@
 FLAGS = -g -Wall -pedantic
-LIBRARYDIR = src/libbrightness/
-INCLUDEDIR = include/
-BINDIR = bin/
-LIBRARY = libbrightness
+LIBRARYDIR = src/libbacklight/
+LIBRARY = libbacklight
 LIBRARYSRC = $(LIBRARYDIR)$(LIBRARY).c
-LIBRARYCMP = $(LIBRARY).a
-APPLET = brightness-qt
-APPLETSRC = src/brightness-qt.cpp src/brightness.cpp
-OBJECTS = $(PROJECT).o
+LIBRARYCMP = lib/$(LIBRARY).a
+OBJECTS = build/$(LIBRARY).o
+APP = sbacklight
+APPSRC = src/$(APP).c
 
-all: $(OBJECTS) $(LIBRARYCMP) $(APPLET)
+all: $(OBJECTS) $(LIBRARYCMP) $(APP) install
 
 $(OBJECTS): $(LIBRARYSRC)
 	gcc $(FLAGS) -c -o $(OBJECTS) $(LIBRARYSRC)
@@ -17,12 +15,22 @@ $(OBJECTS): $(LIBRARYSRC)
 $(LIBRARYCMP): $(OBJECTS)
 	ar rcs $(LIBRARYCMP) $(OBJECTS)
 
-$(APPLET): $(APPLETSRC)
-	g++ $(FLAGS) `pkg-config --cflags --libs Qt5Widgets` -fPIC $(APPLETSRC) -o $(APPLET) -ludev -L. -lbrightness
+$(APP): $(APPSRC)
+	gcc $(APPSRC) $(FLAGS) -o bin/sbacklight -Llib -lbacklight -ludev
 
-clean:
+install: 
+	@echo "Root access is needed to move the udev rule and executable"
+	@sudo cp 90-backlight.rules /etc/udev/rules.d/90-backlight.rules
+	@sudo cp bin/sbacklight /usr/bin/sbacklight
+	@echo "Successfully installed sbacklight: To use type 'sbacklight -h'"
+
+remove: 
 	rm -r $(OBJECTS)
+	rm -r build
+	rm -r bin
+	rm -r lib
 
-remove: clean
-	rm -r $(LIBRARYCMP)
-	rm -r $(APPLET)
+folders:
+	mkdir build
+	mkdir bin
+	mkdir lib
