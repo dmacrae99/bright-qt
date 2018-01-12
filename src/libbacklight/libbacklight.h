@@ -22,7 +22,7 @@
 #define LIBBRIGHTNESS_H
 
 struct backlight {
-	const char *devname;
+	const char *backlightname;
 	long int maxbrightness;
 	long int currentbrightness;
 	char *foldername;
@@ -34,7 +34,9 @@ int get_currentbrightness(struct backlight *backlight);
 const char *get_backlightname();
 char *get_filename(const char *folderpath, const char *file);
 char *get_folderpath(struct backlight *backlight);
-void set_brightness(struct backlight *backlight,int amount);
+void set_brightness(struct backlight *backlight, int amount);
 struct backlight *init_backlight();
+void errorlog(const char *msg, int error);
+void backlight_unref(struct backlight *backlight);
 
 #endif
