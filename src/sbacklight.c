@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "libbacklight.h"
+#include "libbacklight/libbacklight.h"
 
 int main(int argc, char *argv[]) {
 	if (argc < 2) {
@@ -12,12 +12,13 @@ int main(int argc, char *argv[]) {
 }
 
 void help() {
-	printf("sbacklight: Application to control the backlight of laptops\n");
-	printf("USAGE: sbacklight <Option> <Value>\n");
-	printf("<Option>: \n
-			\t-i\t--inc\tIncrease the brightness\n
-			\t-c\t--current\tDisplay the current brightness\n
-			\t-h\t--help\tDisplay this help menu\n");
-	printf("<Value>: This application works in percentage, So use percentage 
-			amounts for functions\n");
+	printf("Application to control the backlight\n");
+	printf("USAGE: sbacklight <Option>\n");
+	printf("    <Option>: \n");
+	printf("        -s, --set     PERCENT    Set brightness to percent");
+	printf("        -m, --max                Set brightness to max");
+	printf("        -i, --inc     PERCENT    Increase brightness");
+	printf("        -d, --dec     PERCENT    Decrease brightness");
+	printf("        -c, --cur                Prints the current brightness");
+	printf("        -h, --help               Prints this help menu");
 }
