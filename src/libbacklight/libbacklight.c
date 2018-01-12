@@ -27,12 +27,12 @@
 
 #include "libbacklight.h"
 
-const char backlightsyspath = "/sys/class/backlight/"
+const char *backlightsyspath = "/sys/class/backlight/";
 
 struct backlight *init_backlight() {
 	struct backlight *backlight = malloc(sizeof(struct backlight));
 	
-	backlight->devname = get_backlightname();
+	backlight->backlightname = get_backlightname();
 	backlight->foldername = get_folderpath(backlight);	
 	backlight->currentbrightness = get_currentbrightness(backlight);
 	backlight->maxbrightness = get_maxbrightness(backlight);
@@ -40,16 +40,23 @@ struct backlight *init_backlight() {
 	return backlight;
 }
 
+void backlight_unref(struct backlight *backlight) {
+	free(backlight->foldername);
+	free(backlight);
+}
+
 const char *get_backlightname() {
 	struct udev *udev;
 	struct udev_enumerate *enumerate;
 	struct udev_list_entry *dev_list_entrys;
 	const char *path, *sysname;
+	char *output = malloc(100*(sizeof(char)));
 	struct udev_device *dev;
 	
 	udev = udev_new();
-	if (!udev)
-		fprintf(stderr, "Failed to create udev device: %s", strerror(r));
+	if (!udev) {
+		errorlog("Failed to Create udev device", 0);
+	}
 	else {
 		enumerate = udev_enumerate_new(udev);
 		udev_enumerate_add_match_subsystem(enumerate, "backlight");
@@ -58,30 +65,15 @@ const char *get_backlightname() {
 		path = udev_list_entry_get_name(dev_list_entrys);
 		dev = udev_device_new_from_syspath(udev, path);
 		sysname = udev_device_get_sysname(dev);
+		strcpy(output, sysname);
 	}
-	free(udev);
-	free(enumerate);
-	free(dev_list_entrys);
-	free(dev);
-	return sysname;
+	dev = udev_device_unref(dev);
+	enumerate = udev_enumerate_unref(enumerate);
+	udev = udev_unref(udev);
+	return output;
 }
 
 
-char *get_folderpath(struct backlight *backlight) {
-	char *folderpath;
-	folderpath = malloc(500*sizeof(char));
-	strcpy(folderpath, backlightsyspath);
-	strcat(folderpath, backlight->devname);
-	strcat(folderpath, "/");
-	return folderpath;
-}
-
-char *get_filename(const char *folderpath, const char *file) {
-	char *filename = malloc(500*sizeof(char));
-	filename = strcpy(filename, folderpath);
-	filename = strcat(filename, file);
-	return filename;
-}
 
 int get_maxbrightness(struct backlight *backlight) {
 	return get_brightness(get_filename(backlight->foldername,"max_brightness"));
@@ -99,7 +91,8 @@ int get_brightness(char *file) {
 	if(brightnessf != NULL)
 		fgets(readbuffer, 10, brightnessf);
 	else
-		fprintf(stderr, "ERROR: Failed to open file for reading!\nTry with sudo\n");
+		fprintf(stderr, "Failed to open %s for reading\n", file);
+
 	brightness = atoi(readbuffer);
 
 	free(readbuffer);
@@ -126,3 +119,31 @@ void set_brightness(struct backlight *backlight, int amount) {
 	free(writebuffer);
 	fclose(brightnessf);
 }
+
+char *get_folderpath(struct backlight *backlight) {
+	char *folderpath;
+	folderpath = malloc(500*sizeof(char));
+	strcpy(folderpath, backlightsyspath);
+	strcat(folderpath, backlight->backlightname);
+	strcat(folderpath, "/");
+	return folderpath;
+}
+
+char *get_filename(const char *folderpath, const char *file) {
+	char *filename = malloc(500*sizeof(char));
+	filename = strcpy(filename, folderpath);
+	filename = strcat(filename, file);
+	return filename;
+}
+
+void errorlog(const char *msg, int error) {
+	char *output = malloc(100*sizeof(char));
+	
+	strcpy(output, msg);
+	strcat(output, ": ");
+	strcat(output, strerror(error));
+	strcat(output, "\n");
+	fprintf(stderr, output);
+	free(output);
+}
+
