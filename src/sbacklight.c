@@ -89,7 +89,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (set == 1) {
-		printf("Setting brightness to %d\n", value);
 		set_brightness(backlight, value);
 	}
 
