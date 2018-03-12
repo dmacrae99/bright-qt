@@ -14,11 +14,13 @@ To install:
 	sudo make install
 	
 If you want to be able to set the backlight without root access add yourself to the video group with
+
 	sudo gpasswd -a <user> video
 	
 Make sure to reboot so the udev rule that was copied in make install can be configured by udev
 
 For help:
+
 	sbacklight -h
 
 
