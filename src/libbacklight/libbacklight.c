@@ -42,7 +42,6 @@ struct backlight *init_backlight() {
 
 void backlight_unref(struct backlight *backlight) {
 	free(backlight->foldername);
-	free(backlight->backlightname);
 	free(backlight);
 }
 
