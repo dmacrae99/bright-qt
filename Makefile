@@ -24,7 +24,7 @@ install:
 	@sudo cp bin/sbacklight /usr/bin/sbacklight
 	@echo "Successfully installed sbacklight: To use type 'sbacklight -h'"
 
-remove: 
+clean: 
 	rm -r $(OBJECTS)
 	rm -r build
 	rm -r bin

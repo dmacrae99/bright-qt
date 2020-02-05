@@ -33,16 +33,29 @@ struct backlight *init_backlight() {
 	struct backlight *backlight = malloc(sizeof(struct backlight));
 	
 	backlight->backlightname = get_backlightname();
+	if( backlight->backlightname != NULL )
+	{
+
 	backlight->foldername = get_folderpath(backlight);	
 	backlight->currentbrightness = get_currentbrightness(backlight);
 	backlight->maxbrightness = get_maxbrightness(backlight);
+	}
+	else
+	{
+		free(backlight);
+		backlight = NULL;
+	}
 	
 	return backlight;
 }
 
-void backlight_unref(struct backlight *backlight) {
-	free(backlight->foldername);
-	free(backlight);
+void backlight_unref(struct backlight *backlight) 
+{
+	if( backlight != NULL )
+	{
+		free(backlight->foldername);
+		free(backlight);
+	}
 }
 
 const char *get_backlightname() {
@@ -65,8 +78,19 @@ const char *get_backlightname() {
 		path = udev_list_entry_get_name(dev_list_entrys);
 		dev = udev_device_new_from_syspath(udev, path);
 		sysname = udev_device_get_sysname(dev);
-		strcpy(output, sysname);
+
+		/* Ensures that there is an actual backlight to control */
+		if( sysname != NULL )
+		{
+			strcpy(output, sysname);
+		}
+		else
+		{
+			free( output);
+			output = NULL;
+		}
 	}
+
 	dev = udev_device_unref(dev);
 	enumerate = udev_enumerate_unref(enumerate);
 	udev = udev_unref(udev);
@@ -122,7 +146,7 @@ void set_brightness(struct backlight *backlight, int amount) {
 
 char *get_folderpath(struct backlight *backlight) {
 	char *folderpath;
-	folderpath = malloc(500*sizeof(char));
+	folderpath = malloc(100*sizeof(char));
 	strcpy(folderpath, backlightsyspath);
 	strcat(folderpath, backlight->backlightname);
 	strcat(folderpath, "/");
@@ -130,7 +154,7 @@ char *get_folderpath(struct backlight *backlight) {
 }
 
 char *get_filename(const char *folderpath, const char *file) {
-	char *filename = malloc(500*sizeof(char));
+	char *filename = malloc(100*sizeof(char));
 	filename = strcpy(filename, folderpath);
 	filename = strcat(filename, file);
 	return filename;

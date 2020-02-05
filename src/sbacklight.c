@@ -12,6 +12,13 @@ int main(int argc, char *argv[]) {
 		return EXIT_SUCCESS;
 	}
 	struct backlight *backlight = init_backlight();
+	if( backlight == NULL)
+	{
+		printf( "Backlight control is not supported on this device\n");
+	}
+	else
+	{
+
 	int value;
 	int set = 0;
 
@@ -93,6 +100,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	backlight_unref(backlight);
+	}
 	return EXIT_SUCCESS;
 }
 
